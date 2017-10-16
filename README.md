@@ -1484,6 +1484,12 @@ cd -
 cd server/extension && sudo make install
 ```
 
+Install pip:
+```
+wget  -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
+python /tmp/get-pip.py
+```
+
 Install python library:
 
 ```
