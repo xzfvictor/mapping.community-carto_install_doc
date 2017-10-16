@@ -1729,6 +1729,7 @@ And on your database server, components to check are:
 
 # 4.2 On Web server
 ### a. Upgrade CartoDB application
+
 Stop Apache first
 ```
 sudo service httpd stop
@@ -1748,23 +1749,26 @@ cd /opt/cartodb
 git checkout master
 git pull
 ```
+
 Install dependencies
 ```
 export PATH=$PATH:/usr/pgsql-9.5/bin/:/opt/rubies/ruby-2.2.3/bin
 RAILS_ENV=production bundle install --deployment --without development test
 ```
+
 Edit package.json file and change the required version of grunt from 1.0.1 to 0.4.5
 ```
 nano package.json
 Change "grunt": "1.0.1", to "grunt": "0.4.5",
-
 ```
+
 Note: At the time of writing, in order to install grunt for Production without errors, we have to keep grunt at version 0.4.5. If you are using CartoDB in Development environment, you can skip this step.
 
 Run npm to install other dependencies
 ```
 npm install
 ```
+
 Install all necessary gems:
 ```
 export PATH=$PATH:$PWD/node_modules/grunt-cli/bin
@@ -1778,12 +1782,19 @@ RAILS_ENV=production bundle exec rake cartodb:db:reset_trigger_check_quota
 RAILS_ENV=production bundle exec rake cartodb:db:load_functions
 ```
 
+Update the postgresql extension:
+```
+cd /opt/cartodb/lib/sql/
+PGUSER=postgres make all install
+```
+
 Restart Apache
 ```
 sudo service httpd start
 ```
 
 ### b. Upgrade Carto SQL API application
+
 Stop SQL API service first
 ```
 sudo service cartodb-sql stop
@@ -1795,18 +1806,39 @@ cp -Rp /opt/CartoDB-SQL-API /opt/CartoDB-SQL-API.backup
 ```
 Note. make sure you have enough space under /opt or you can choose a different location
 
-Check out the latest version from Office Github source
+Preserve your carto-sql-api configuration file:
+```
+cp /opt/CartoDB-SQL-API/config/environments/production.js /tmp
+```
+
+Option 1: we have found in testing that it may be better to perform a fresh reinstall of the new version rather than upgrade in-line. If you'd like to do this, here are the steps:
+
+```
+sudo rm -fr CartoDB-SQL-API
+cd /opt
+sudo git clone https://github.com/CartoDB/CartoDB-SQL-API.git
+sudo chown -R carto Windshaft-cartodb
+cd /opt/CartoDB-SQL-API
+npm install
+sudo cp /tmp/production.js /opt/CartoDB-SQL-API/config/environments/
+sudo chown carto:carto production.js
+```
+
+Option 2: Alternately, check out the latest version from Office Github source from within your existing direction:
+
 ```
 cd /opt/CartoDB-SQL-API
 git checkout master
 git pull
 ```
-Start SQL API service
+
+Start SQL API service:
 ```
 sudo service cartodb-sql start
 ```
 
 ### c. Upgrade Windshaft-CartoDB application
+
 Stop windshaft service first
 ```
 sudo service windshaft-cartodb stop
@@ -1816,21 +1848,45 @@ Make a backup of your current cartodb folder
 ```
 cp -Rp /opt/Windshaft-cartodb /opt/Windshaft-cartodb.backup
 ```
-Note. make sure you have enough space under /opt or you can choose a different location
+Note: make sure you have enough space under /opt or you can choose a different location
 
-Check out the latest version from Office Github source
+Preserve your windshaft configuration file:
+```
+cp /opt/Windshaft-cartodb/config/environments/production.js /tmp
+```
+
+Option 1: we have found in testing that it may be better to perform a fresh reinstall of the new version rather than upgrade in-line. If you'd like to do this, here are the steps:
+
+```
+sudo rm -fr /opt/Windshaft-cartodb
+cd /opt
+git clone https://github.com/CartoDB/Windshaft-cartodb.git
+sudo chown -R carto Windshaft-cartodb
+cd Windshaft-cartodb
+npm install
+sudo cp /tmp/production.js /opt/Windshaft-cartodb/config/environments/
+sudo chown carto:carto production.js
+mkdir /opt/cartodb/tile_assets/
+touch /opt/Windshaft-cartodb/logs
+```
+
+Option 2: Alternately, check out the latest version from Office Github source from within your existing direction:
+
 ```
 cd /opt/Windshaft-cartodb
 git checkout master
 git pull
 ```
+
 Start Windshaft service
 ```
 sudo service windshaft-cartodb start
 ```
 
 # 4.3 On DB server
+
 ### a. Upgrade Cartodb-postgresql
+
 Check out the latest version from Office Github source
 ```
 cd /opt/cartodb-postgresql
@@ -1863,7 +1919,7 @@ git pull
 ```
 Install the new extension
 ```
-sudo make install
+PGUSER=postgres sudo make install
 ```
 
 ### c. Upgrade dataservices-api
